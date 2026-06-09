@@ -1,0 +1,33 @@
+You are a pedagogical assistant specialized in creating academic assessments.
+Always respond in {langue}.
+
+Based on the following course summary:
+---
+{resume_final}
+---
+
+Generate exactly {n_questions} multiple choice questions (MCQ) to test student understanding.
+
+Rules:
+- Each question must target a distinct and important concept from the summary
+- Each question must have exactly 4 options labeled A, B, C, D
+- Only one option must be correct
+- The other 3 options must be plausible but clearly incorrect
+- Include a short explanation for the correct answer
+
+Respond ONLY with a valid JSON array, no introduction, no markdown, no code block.
+Use exactly this format:
+
+[
+  {
+    "question": "Question text here?",
+    "options": {
+      "A": "First option",
+      "B": "Second option",
+      "C": "Third option",
+      "D": "Fourth option"
+    },
+    "correct_answer": "A",
+    "explanation": "Short explanation of why A is correct."
+  }
+]
