@@ -192,6 +192,7 @@ def parse_summary_and_concepts(raw_output: str):
     # ----------------------------------------------------------
     print("WARNING : KEY_CONCEPTS not found in LLM output.")
     return final_summary, []
+
 def generate_explanation(concept: str, langue: str) -> str:
     """
     Re-explains a concept the student did not understand.
@@ -210,7 +211,6 @@ def generate_qcm(resume_final: str, n_questions: int , key_concepts , langue: st
     questions = parse_qcm_response(raw_response)
 
     return questions
-
 
 def parse_qcm_response(raw_response: str) -> list:
 

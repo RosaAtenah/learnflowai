@@ -14,10 +14,10 @@ MIN_TEXT_LENGTH = 100
 
 # Chunking
 
-CHUNK_SIZE = 1000           # Tokens per chunk
+CHUNK_SIZE = 700           # Tokens per chunk
                            
 
-CHUNK_OVERLAP = 100         # Overlapping tokens between chunks
+CHUNK_OVERLAP = 70         # Overlapping tokens between chunks
                             
 # QCM generation
 
