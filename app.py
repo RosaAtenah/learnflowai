@@ -70,9 +70,26 @@ def show_results_dashboard():
         st.rerun()
 
 
+with st.sidebar:
+    st.title("⚙️ Controls")
+
+    if st.button("🔄 Reset — Start over", type="primary"):
+        keys_to_clear = [
+            "extracted_text", "final_summary", "key_concepts",
+            "nb_chunks", "nb_pages", "langue", "ready_for_qcm",
+            "needs_explanation", "last_explanation", "generate_qcm",
+            "n_questions", "questions", "qcm_results",
+            "current_question_index", "answer_submitted",
+            "last_selected", "last_is_correct",
+        ]
+        for key in keys_to_clear:
+            if key in st.session_state:
+                del st.session_state[key]
+        st.rerun()
+
 st.title("AI Study Assistant")
 
-uploaded_file = st.file_uploader("Upload your course (PDF)", type=["pdf"])
+uploaded_file = st.file_uploader("Upload your course (PDF)", type=["pdf"] , accept_multiple_files=False)
 
 if uploaded_file is not None:
 
@@ -181,9 +198,9 @@ if uploaded_file is not None:
         if "final_summary" not in st.session_state:
             with st.spinner("Generating summary... this may take a moment."):
                 try:
-                    summary , nb_chunks = generate_summary(text, langue)
+                    summary , key_concepts  = generate_summary(text, langue)
                     st.session_state["final_summary"] = summary
-                    st.session_state["nb_chunks"] = nb_chunks
+                    st.session_state["key_concepts"] = key_concepts
 
                 except TimeoutError as e:
                     st.error(f"❌ {e}")
@@ -267,12 +284,12 @@ if uploaded_file is not None:
         st.divider()
         st.subheader("🎯 Quiz configuration")
 
-        nb_chunks = st.session_state.get("nb_chunks" , 0)
-        st.write(f"DEBUG — nb_chunks = {nb_chunks}")
+        key_concepts = st.session_state.get("key_concepts" , [])
+        st.write(f"DEBUG — key_concepts = {key_concepts}")
 
         default_questions = max(
             BASE_MIN_QUESTIONS,
-            min(nb_chunks * 2, MAX_QUESTIONS)
+            min(len(key_concepts) * 2, MAX_QUESTIONS)
         )
 
         n_questions = st.slider(
@@ -286,17 +303,19 @@ if uploaded_file is not None:
         if st.button("🚀 Generate Quiz"):
             st.session_state["n_questions"]  = n_questions
             st.session_state["generate_qcm"] = True
-            st.rerun()
+            # st.rerun()
 
-        if "questions" not in st.session_state:
+        if st.session_state.get("generate_qcm") and "questions" not in st.session_state:
             with st.spinner("Generating quiz..."):
                 try:
                     questions = generate_qcm(
                         st.session_state["final_summary"],
                         n_questions,
+                        key_concepts ,
                         st.session_state["langue"]
                     )
                     st.session_state["questions"] = questions
+                    st.rerun()
 
                 except ValueError as e:
                     st.error(f"❌ {e}")

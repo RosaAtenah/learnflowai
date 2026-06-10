@@ -33,7 +33,10 @@ Output format:
 Summary
 [merged summary]
 
-KEY_CONCEPTS
-- Concept 1
-- Concept 2
-- Concept 3
+KEY_CONCEPTS = {
+
+Concept 1 ,
+Concept 2 ,
+Concept 3 ,
+....
+}

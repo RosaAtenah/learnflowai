@@ -6,14 +6,24 @@ Based on the following course summary:
 {resume_final}
 ---
 
+The key concepts identified in this course are:
+{key_concepts}
+
 Generate exactly {n_questions} multiple choice questions (MCQ) to test student understanding.
 
 Rules:
-- Each question must target a distinct and important concept from the summary
+- Generate exactly 2 questions per key concept listed above
+- If the total number of key concepts × 2 exceeds {n_questions}, prioritize
+  the most important concepts until you reach exactly {n_questions} questions
+- If the total number of key concepts × 2 is less than {n_questions}, add
+  extra questions on secondary concepts from the summary
+- Each question must target a distinct aspect of its concept
+  (e.g. definition, application, comparison, example)
 - Each question must have exactly 4 options labeled A, B, C, D
 - Only one option must be correct
 - The other 3 options must be plausible but clearly incorrect
 - Include a short explanation for the correct answer
+- Do NOT generate 2 identical or very similar questions on the same concept
 
 Respond ONLY with a valid JSON array, no introduction, no markdown, no code block.
 Use exactly this format:
@@ -21,6 +31,7 @@ Use exactly this format:
 [
   {
     "question": "Question text here?",
+    "concept": "Name of the key concept this question targets",
     "options": {
       "A": "First option",
       "B": "Second option",

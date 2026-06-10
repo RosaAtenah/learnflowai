@@ -30,7 +30,7 @@ def call_llm(prompt: str) -> str:
                             messages=[
                                 {"role": "user", "content": prompt}
                             ],
-                            max_tokens=1000
+                            max_tokens=4000
                         )
             return response.choices[0].message.content.strip()
         except Exception as e:
@@ -111,14 +111,87 @@ def generate_summary(text: str, langue: str):
         raise ValueError("No summary could be generated.")
 
     if len(partial_summaries) == 1:
-        return partial_summaries[0], len(chunks)    
+        print("here")
+        return partial_summaries[0]  , []
 
     fusion_prompt = build_fusion_prompt(partial_summaries, langue)
     time.sleep(5)
-    final_summary = call_llm(fusion_prompt)
+    raw_output = call_llm(fusion_prompt)
+    # DEBUG TEMPORAIRE — à supprimer après vérification
+    print("=== RAW OUTPUT ===")
+    print(raw_output[-500:])   # affiche les 500 derniers caractères
+    print("=== END RAW OUTPUT ===")
 
-    return final_summary, len(chunks)               
+    final_summary, key_concepts = parse_summary_and_concepts(raw_output)
 
+    # DEBUG TEMPORAIRE
+    print(f"=== KEY_CONCEPTS FOUND : {key_concepts} ===")
+    return final_summary , key_concepts
+
+def parse_summary_and_concepts(raw_output: str):
+    import re
+
+    key_concepts  = []
+    final_summary = raw_output.strip()
+
+    # ----------------------------------------------------------
+    # Normalisation : supprimer les astérisques autour de KEY_CONCEPTS
+    # **KEY_CONCEPTS** → KEY_CONCEPTS
+    # ----------------------------------------------------------
+    normalized = re.sub(r"\*{1,2}(KEY_CONCEPTS)\*{1,2}", r"\1", raw_output, flags=re.IGNORECASE)
+
+    # ----------------------------------------------------------
+    # Strategy 1 : KEY_CONCEPTS = { ... }
+    # Gère le cas où = { est sur la même ligne OU la ligne suivante
+    # ----------------------------------------------------------
+    pattern = r"KEY_CONCEPTS\s*[\n\s]*=\s*\{([^}]*)\}"
+    match   = re.search(pattern, normalized, re.DOTALL | re.IGNORECASE)
+
+    if match:
+        concepts_block = match.group(1)
+        raw_concepts   = re.split(r"[,\n]", concepts_block)
+        key_concepts   = [
+            c.strip().lstrip("-•* ").rstrip(",").strip()
+            for c in raw_concepts
+            if c.strip().lstrip("-•* ").rstrip(",").strip()
+            and len(c.strip().lstrip("-•* ").rstrip(",").strip()) > 1
+        ]
+
+        # Trouver la position dans le texte original
+        orig_match = re.search(r"\*{0,2}KEY_CONCEPTS\*{0,2}", raw_output, re.IGNORECASE)
+        if orig_match:
+            final_summary = raw_output[:orig_match.start()].strip()
+
+        return final_summary, key_concepts
+
+    # ----------------------------------------------------------
+    # Strategy 2 : **KEY_CONCEPTS** suivi de bullet points
+    # (sans accolades)
+    # ----------------------------------------------------------
+    pattern2 = r"KEY_CONCEPTS\s*[=:\n]*([\s\S]*?)(?=\n[A-Z#*]|\Z)"
+    match2   = re.search(pattern2, normalized, re.DOTALL | re.IGNORECASE)
+
+    if match2:
+        concepts_block = match2.group(1)
+        raw_concepts   = re.split(r"[,\n]", concepts_block)
+        key_concepts   = [
+            c.strip().lstrip("-•* ").rstrip(",").strip()
+            for c in raw_concepts
+            if c.strip().lstrip("-•* ").rstrip(",").strip()
+            and len(c.strip().lstrip("-•* ").rstrip(",").strip()) > 1
+        ]
+
+        orig_match = re.search(r"\*{0,2}KEY_CONCEPTS\*{0,2}", raw_output, re.IGNORECASE)
+        if orig_match:
+            final_summary = raw_output[:orig_match.start()].strip()
+
+        return final_summary, key_concepts
+
+    # ----------------------------------------------------------
+    # Strategy 4 : Rien trouvé
+    # ----------------------------------------------------------
+    print("WARNING : KEY_CONCEPTS not found in LLM output.")
+    return final_summary, []
 def generate_explanation(concept: str, langue: str) -> str:
     """
     Re-explains a concept the student did not understand.
@@ -126,9 +199,9 @@ def generate_explanation(concept: str, langue: str) -> str:
     prompt = build_explain_prompt(concept, langue)
     return call_llm(prompt)
 
-def generate_qcm(resume_final: str, n_questions: int, langue: str):
+def generate_qcm(resume_final: str, n_questions: int , key_concepts , langue: str):
     # Step 1 : Build the prompt
-    prompt = build_qcm_prompt(resume_final, n_questions, langue)
+    prompt = build_qcm_prompt(resume_final, n_questions , key_concepts , langue)
 
     # Step 2 : Call the LLM → returns raw JSON string
     raw_response = call_llm(prompt)

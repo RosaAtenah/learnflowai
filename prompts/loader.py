@@ -24,12 +24,19 @@ def build_fusion_prompt(partial_summaries: list, langue: str) -> str:
                    .replace("{langue}", langue)
 
 
-def build_qcm_prompt(resume_final: str, n_questions: int, langue: str) -> str:
+def build_qcm_prompt(resume_final: str, n_questions: int, key_concepts: list, langue: str) -> str:
     template = load_prompt("qcm_prompt.txt")
+
+    # Format key_concepts as a clean list string
+    if key_concepts:
+        concepts_str = "\n".join(f"- {c}" for c in key_concepts)
+    else:
+        concepts_str = "No specific concepts provided."
+
     return template.replace("{resume_final}", resume_final)\
                    .replace("{n_questions}", str(n_questions))\
+                   .replace("{key_concepts}", concepts_str)\
                    .replace("{langue}", langue)
-
 
 def build_explain_prompt(concept: str, langue: str) -> str:
     template = load_prompt("explain_prompt.txt")
