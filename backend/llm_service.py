@@ -3,7 +3,8 @@ import requests
 from config.settings import MODEL, MAX_RETRIES
 from backend.pdf_handler import chunk_text
 import streamlit as st
-import google.generativeai as genai
+from groq import Groq
+# import google.generativeai as genai
 from prompts.loader import (
     build_summary_prompt,
     build_fusion_prompt,
@@ -11,18 +12,27 @@ from prompts.loader import (
     build_explain_prompt
 )
 
-genai.configure(api_key=st.secrets["MODEL_API_KEY"])
-model = genai.GenerativeModel(MODEL)
+# genai.configure(api_key=st.secrets["MODEL_API_KEY"])
+# model = genai.GenerativeModel(MODEL)
 
+client = Groq(api_key=st.secrets["MODEL_API_KEY"])
+model = MODEL
 import time
 
 def call_llm(prompt: str) -> str:
 
     for attempt in range(MAX_RETRIES):
         try:
-            response = model.generate_content(prompt)
-            return response.text.strip()
-
+            # response = model.generate_content(prompt)
+            # return response.text.strip()
+            response = client.chat.completions.create(
+                            model=model,
+                            messages=[
+                                {"role": "user", "content": prompt}
+                            ],
+                            max_tokens=1000
+                        )
+            return response.choices[0].message.content.strip()
         except Exception as e:
             error_msg = str(e)
 
@@ -30,8 +40,8 @@ def call_llm(prompt: str) -> str:
                 # Quota journalier épuisé → inutile de retry
                 if "daily" in error_msg.lower():
                     raise RuntimeError(
-                        "Daily Gemini API quota exceeded. "
-                        "Please try again tomorrow."
+                        "Groq rate limit reached after several retries. "
+                        "Please wait a moment and try again."
                     )
 
                 # Rate limit → attendre de plus en plus longtemps
@@ -53,35 +63,61 @@ def call_llm(prompt: str) -> str:
                 )
 
     return ""
-@st.cache_data
-def generate_summary(text: str, langue: str) -> str:
-    """
-    Full pipeline : chunk → summarize each chunk → fuse all summaries.
-    """
-    chunks = chunk_text(text)
-    nb_chunks = len(chunks)
 
-    # Step 1 : Summarize each chunk
+@st.cache_data
+# def generate_summary(text: str, langue: str) -> str:
+#     """
+#     Full pipeline : chunk → summarize each chunk → fuse all summaries.
+#     """
+#     chunks = chunk_text(text)
+#     nb_chunks = len(chunks)
+
+#     # Step 1 : Summarize each chunk
+#     partial_summaries = []
+#     for i, chunk in enumerate(chunks):
+#         time.sleep(15)
+#         prompt  = build_summary_prompt(chunk, langue)
+#         summary = call_llm(prompt)
+#         if summary:
+#             partial_summaries.append(summary) , nb_chunks
+
+#     if not partial_summaries:
+#         raise ValueError("No summary could be generated from this document.")
+
+#     # Step 2 : Fuse all partial summaries
+#     if len(partial_summaries) == 1:
+#         return partial_summaries[0]
+    
+#     time.sleep(5)
+
+#     fusion_prompt = build_fusion_prompt(partial_summaries, langue)
+#     return call_llm(fusion_prompt) , nb_chunks
+
+def generate_summary(text: str, langue: str):
+
+    chunks = chunk_text(text)
     partial_summaries = []
+
     for i, chunk in enumerate(chunks):
-        time.sleep(15)
         prompt  = build_summary_prompt(chunk, langue)
         summary = call_llm(prompt)
         if summary:
             partial_summaries.append(summary)
 
-    if not partial_summaries:
-        raise ValueError("No summary could be generated from this document.")
+        if i < len(chunks) - 1:
+            time.sleep(5)
 
-    # Step 2 : Fuse all partial summaries
+    if not partial_summaries:
+        raise ValueError("No summary could be generated.")
+
     if len(partial_summaries) == 1:
-        return partial_summaries[0]
-    
-    time.sleep(5)
+        return partial_summaries[0], len(chunks)    
 
     fusion_prompt = build_fusion_prompt(partial_summaries, langue)
-    return call_llm(fusion_prompt) , nb_chunks
+    time.sleep(5)
+    final_summary = call_llm(fusion_prompt)
 
+    return final_summary, len(chunks)               
 
 def generate_explanation(concept: str, langue: str) -> str:
     """

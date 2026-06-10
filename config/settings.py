@@ -14,10 +14,10 @@ MIN_TEXT_LENGTH = 100
 
 # Chunking
 
-CHUNK_SIZE = 2000           # Tokens per chunk
+CHUNK_SIZE = 1000           # Tokens per chunk
                            
 
-CHUNK_OVERLAP = 150         # Overlapping tokens between chunks
+CHUNK_OVERLAP = 100         # Overlapping tokens between chunks
                             
 # QCM generation
 
@@ -43,7 +43,6 @@ INTERVAL_EASY  = 7
 
 # MODEL_PROVIDER = "gemini"
 # MODEL   = "gemini-2.0-flash"
-#                             # Reason : free on Hugging Face, good instruction
 
 MODEL_PROVIDER = "groq"
 MODEL = "llama-3.1-8b-instant"

@@ -259,9 +259,16 @@ if uploaded_file is not None:
                         del st.session_state["last_explanation"]
                         st.rerun()
 
-    # Step 9 : Generate and display QCM
-    if st.session_state.get("generate_qcm"):
-        nb_chunks = st.session_state.get("nb_chunks", 3)
+    # ----------------------------------------------------------
+    # Step 8b : Quiz configuration (after student understood)
+    # ----------------------------------------------------------
+    if st.session_state.get("ready_for_qcm") and "questions" not in st.session_state:
+
+        st.divider()
+        st.subheader("🎯 Quiz configuration")
+
+        nb_chunks = st.session_state.get("nb_chunks" , 0)
+        st.write(f"DEBUG — nb_chunks = {nb_chunks}")
 
         default_questions = max(
             BASE_MIN_QUESTIONS,
@@ -272,8 +279,14 @@ if uploaded_file is not None:
             "How many questions do you want?",
             min_value=1,
             max_value=MAX_QUESTIONS,
-            value=default_questions
+            value=default_questions,
+            key="n_questions_slider"
         )
+
+        if st.button("🚀 Generate Quiz"):
+            st.session_state["n_questions"]  = n_questions
+            st.session_state["generate_qcm"] = True
+            st.rerun()
 
         if "questions" not in st.session_state:
             with st.spinner("Generating quiz..."):

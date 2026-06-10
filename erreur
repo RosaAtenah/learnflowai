@@ -1,0 +1,52 @@
+📄 Course Summary
+Introduction aux Chaînes de Markov en Temps Continu
+
+Les chaînes de Markov en temps continu sont des processus aléatoires dont l'état est un entier positif ou nul temporisé par un nombre réel positif ou nul. Le vecteur stochastique π(t) = (π0(t), π1(t), ..., πn(t)) représente la probabilité que le processus soit dans l'état i à l'instant t.
+
+Définitions Fondamentales
+
+Définition : matrice carrée A appelée générateur stochastique infinitésimal, qui a les propriétés suivantes :
+Somme des éléments d'une ligne quelconque nulle
+Eléments sur la diagonale négatifs ou nuls, les autres positifs ou nuls
+Exemple : P(ε) = Id + εA + o(ε) où ε est un nombre réel positif inessant
+Chaine de Markov Homogène
+
+Définition : vecteur stochastique π(t) vérifiant une équation différentielle dt π(t) = π(t) A(t) où A(t) est un générateur stochastique infinitésimal
+Équation d'état : π(t + ε) = π(t) + επ(t)A + ε^2π(t)A^2 + o(ε^2) où ε → 0+
+Résolution par calcul d'une exponentielle : π(t) = π(0)exp(tA) où tA est le développement de Taylor de exp(tA)
+Matrice exp(tA) est stochastique si A est un générateur stochastique infinitésimal
+Utilisation des Valeurs Propres
+
+Si A est une matrice diagonale D = diag(λ0, λ1, ..., λn) alors exp(tA) = diag(eλ0t, eλ1t, ..., eλnt)
+Si A est diagonalisable, alors exp(tA) = Q · exp(tD) · Q^(-1) où D est une matrice diagonale
+Composantes de la matrice exp(tA) sont des polynômes exponentiels s'il y a des valeurs propres doubles.
+Discrétisation d'une Chaîne de Markov en Temps Continu
+
+La matrice stochastique P(ε) calculée pour un temps infiniment petit ε admet le développement limité P(ε) = Id + εA + o(ε). Le vecteur stochastique π(t) est calculé à partir de la formule π(t + 1) = π(t) exp(A). La chaîne de Markov en temps discret a le même comportement que la chaîne de Markov en temps continu pour des valeurs entières du temps.
+
+Utilisation de la Transformée de Laplace
+
+La transformée de Laplace permet de résoudre les équations d'état en temps continu. La distribution stationnaire π peut être calculée en résolvant le système linéaire πA = 0. La transformée de Laplace inverse permet de calculer l'expression symbolique du vecteur stochastique π(t).
+
+Processus de Naissance et de Mort
+
+Le processus de naissance et de mort est représenté par un diagramme... Le générateur stochastique infinitésimal A vérifie l'équation P(ε) = Id + εA + o(ε). La distribution stationnaire π est calculée en résolvant le système linéaire πA = 0. Les équations dites de la balance sont λ0π0 = µ1π1, λ1π1 = µ2π2, ...
+
+Distribution Stationnaire
+
+La distribution stationnaire π est donnée par la formule πk = λ0λ1 · · · λk-1 µ1µ2 · · · µk / (1 + λ0 + λ0λ1 µ1µ2 + ... + λ0λ1 · · · λn-1 µ1µ2 · · · µn). La valeur de π0 est donnée par la formule π0 = 1 / (1 + λ0 + λ0λ1 µ1µ2 + ... + λ0λ1 · · · λn-1 µ1µ2 · · · µn).
+
+Problème de Routeur
+
+Définition du Problème
+Un routeur reçoit des paquets en moyenne λ par unité de temps selon un
+💬 Did you understand this summary?
+
+
+
+Text extracted successfully (2023 words).
+
+ Quiz configuration
+DEBUG — nb_chunks = 3
+
+How many questions do you want?
