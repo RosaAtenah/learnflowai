@@ -11,25 +11,32 @@ def show_results_dashboard():
     n_correct = sum(1 for r in results if r["is_correct"])
 
     st.divider()
-    st.subheader("📊 Session Results")
+    st.subheader("Session Results")
 
     # Score
     score_pct = round((n_correct / n_total) * 100)
     st.metric("Score", f"{n_correct} / {n_total}", f"{score_pct}%")
 
     # Results table
-    st.markdown("### Review Table")
+    st.markdown("Review Table")
 
+    srs_labels = {
+        0: "Again",
+        2: "Hard",
+        4: "Good",
+        5: "Easy"
+    }
+
+    srs_colors = {
+        0: "red",
+        2: "orange",
+        4: "green",
+        5: "blue"
+    }
     for i, r in enumerate(results):
 
-        # SRS label
-        srs_labels = {
-            0: "🔴 Again",
-            2: "🟠 Hard",
-            4: "🟢 Good",
-            5: "🔵 Easy"
-        }
         srs_label = srs_labels.get(r["srs_quality"], "?")
+        srs_color = srs_colors.get(r["srs_quality"], "gray")
 
         # Next review label
         if r["interval"] == 1:
@@ -37,10 +44,13 @@ def show_results_dashboard():
         else:
             next_review_label = f"In {r['interval']} days"
 
+        status = "Correct" if r['is_correct'] else "Incorrect"
+        status_color = "green" if r['is_correct'] else "red"
+
         st.markdown(
             f"**Q{i+1}** — {r['question'][:60]}...  \n"
-            f"{'✅' if r['is_correct'] else '❌'} {srs_label} "
-            f"→ Next review : {next_review_label}"
+            f":{status_color}[{status}] — :{srs_color}[{srs_label}] "
+            f"→ Next review: {next_review_label}"
         )
 
     st.divider()
@@ -49,16 +59,16 @@ def show_results_dashboard():
     n_to_review = sum(1 for r in results if r["interval"] == 1)
     if n_to_review > 0:
         st.warning(
-            f"💡 {n_to_review} concept(s) to review tomorrow. "
+            f"{n_to_review} concept(s) to review tomorrow. "
             f"Come back to consolidate your knowledge!"
         )
     else:
         st.success(
-            "🎉 Great session! All concepts are well understood."
+            "Great session! All concepts are well understood."
         )
 
     # Restart button
-    if st.button("🔄 Start a new session"):
+    if st.button("Start a new session", icon=":material/refresh:"):
         keys_to_clear = [
             "questions", "qcm_results", "current_question_index",
             "answer_submitted", "generate_qcm", "final_summary",
@@ -71,9 +81,9 @@ def show_results_dashboard():
 
 
 with st.sidebar:
-    st.title("⚙️ Controls")
+    st.title("Controls")
 
-    if st.button("🔄 Reset — Start over", type="primary"):
+    if st.button("Reset — Start over", type="primary", icon=":material/refresh:"):
         keys_to_clear = [
             "extracted_text", "final_summary", "key_concepts",
             "nb_chunks", "nb_pages", "langue", "ready_for_qcm",
@@ -87,7 +97,8 @@ with st.sidebar:
                 del st.session_state[key]
         st.rerun()
 
-st.title("AI Study Assistant")
+st.title("LearnFlow AI")
+st.subheader("AI Study Assistant")
 
 uploaded_file = st.file_uploader("Upload your course (PDF)", type=["pdf"] , accept_multiple_files=False)
 
@@ -97,7 +108,7 @@ if uploaded_file is not None:
     with st.spinner("Checking your file..."):
         result = verify_pdf_validity(uploaded_file)
 
-    # Step 2 : Handle blocking errors → stop immediately
+    # Step 2 : Handle blocking errors : stop immediately
     if not result["valid"]:
         st.error(f"{result['error']}")
         st.stop()
@@ -121,7 +132,9 @@ if uploaded_file is not None:
         default_index = 0
     else:
         page_options = ["First N pages", "Specific range"]
-        default_index = 0    # pre-select "First N pages"
+        # pre-select "First N pages"
+        default_index = 0    
+
 
     mode = st.radio(
         "Which pages do you want to process?",
@@ -203,29 +216,28 @@ if uploaded_file is not None:
                     st.session_state["key_concepts"] = key_concepts
 
                 except TimeoutError as e:
-                    st.error(f"❌ {e}")
+                    st.error(f"{e}")
                     st.stop()
                 except ValueError as e:
-                    st.error(f"❌ {e}")
+                    st.error(f"{e}")
                     st.stop()
 
         
         # Step 8 : Display summary + student feedback
         
-        st.subheader("📄 Course Summary")
+        st.subheader("Course Summary")
         st.markdown(st.session_state["final_summary"])
 
         st.divider()
-        st.subheader("💬 Did you understand this summary?")
+        st.subheader("Did you understand this summary?")
 
         col1, col2 = st.columns(2)
 
         with col1:
-            understood = st.button("✅ Yes, I understood")
+            understood = st.button("Yes, I understood", icon=":material/check:")
 
         with col2:
-            not_understood = st.button("❌ No, I need help")
-
+            not_understood = st.button("No, I need help", icon=":material/close:")
         
         # Path A : Student understood → go to QCM
         
@@ -242,20 +254,20 @@ if uploaded_file is not None:
 
         if st.session_state.get("needs_explanation"):
 
-            st.subheader("🔍 Which concept is unclear?")
+            st.subheader("Which concept is unclear?")
 
             concept = st.text_input(
                 "Type the concept or sentence you did not understand"
             )
 
-            if st.button("💡 Re-explain this concept"):
+            if st.button("Re-explain this concept", icon=":material/lightbulb:"):
                 if concept.strip():
                     with st.spinner("Generating explanation..."):
                         try:
                             explanation = generate_explanation(concept, langue)
                             st.session_state["last_explanation"] = explanation
                         except TimeoutError as e:
-                            st.error(f"❌ {e}")
+                            st.error(f"{e}")
 
             if "last_explanation" in st.session_state:
                 st.info(st.session_state["last_explanation"])
@@ -266,23 +278,21 @@ if uploaded_file is not None:
                 col3, col4 = st.columns(2)
 
                 with col3:
-                    if st.button("✅ Yes, continue to QCM"):
+                    if st.button("Yes, continue to QCM", icon=":material/check:"):
                         st.session_state["ready_for_qcm"]      = True
                         st.session_state["needs_explanation"]   = False
                         st.rerun()
 
                 with col4:
-                    if st.button("🔄 Ask about another concept"):
+                    if st.button("Ask about another concept", icon=":material/refresh:"):
                         del st.session_state["last_explanation"]
                         st.rerun()
 
-    # ----------------------------------------------------------
-    # Step 8b : Quiz configuration (after student understood)
-    # ----------------------------------------------------------
+    # Step 9: Quiz configuration (after student understood)
     if st.session_state.get("ready_for_qcm") and "questions" not in st.session_state:
 
         st.divider()
-        st.subheader("🎯 Quiz configuration")
+        st.subheader("Quiz configuration")
 
         key_concepts = st.session_state.get("key_concepts" , [])
         st.write(f"DEBUG — key_concepts = {key_concepts}")
@@ -300,7 +310,7 @@ if uploaded_file is not None:
             key="n_questions_slider"
         )
 
-        if st.button("🚀 Generate Quiz"):
+        if st.button("Generate Quiz", icon=":material/quiz:"):
             st.session_state["n_questions"]  = n_questions
             st.session_state["generate_qcm"] = True
             # st.rerun()
@@ -318,18 +328,18 @@ if uploaded_file is not None:
                     st.rerun()
 
                 except ValueError as e:
-                    st.error(f"❌ {e}")
+                    st.error(f"{e}")
                     st.stop()
 
-    # ----------------------------------------------------------
+    
     # Step 9 : Display QCM
-    # ----------------------------------------------------------
+    
     if "questions" in st.session_state and st.session_state.get("generate_qcm"):
 
         questions = st.session_state["questions"]
 
         st.divider()
-        st.subheader("📝 Quiz")
+        st.subheader("Quiz")
 
         # Initialize session state for QCM tracking
         if "current_question_index" not in st.session_state:
@@ -343,24 +353,24 @@ if uploaded_file is not None:
 
         current_index = st.session_state["current_question_index"]
 
-        # ----------------------------------------------------------
+        
         # All questions answered → show results dashboard
-        # ----------------------------------------------------------
+        
         if current_index >= len(questions):
             show_results_dashboard()
 
         else:
-            # ----------------------------------------------------------
+            
             # Display current question
-            # ----------------------------------------------------------
+            
             q = questions[current_index]
 
             st.markdown(
-                f"**Question {current_index + 1} / {len(questions)}**"
+                f"Question {current_index + 1} / {len(questions)}"
             )
             st.progress((current_index) / len(questions))
 
-            st.markdown(f"### {q['question']}")
+            st.markdown(f"{q['question']}")
 
             # Radio button for answer selection
             options = q["options"]
@@ -373,13 +383,13 @@ if uploaded_file is not None:
                 index=None      # no pre-selection
             )
 
-            # ----------------------------------------------------------
+            
             # Submit answer button
-            # ----------------------------------------------------------
+            
             if not st.session_state["answer_submitted"]:
-                if st.button("✅ Submit answer", key=f"submit_{current_index}"):
+                if st.button("Submit answer", key=f"submit_{current_index}", icon=":material/check:"):
                     if selected is None:
-                        st.warning("⚠️ Please select an answer before submitting.")
+                        st.warning("Please select an answer before submitting.")
                     else:
                         selected_letter = selected[0]   # extract "A", "B", "C" or "D"
                         is_correct      = selected_letter == q["correct_answer"]
@@ -389,28 +399,28 @@ if uploaded_file is not None:
                         st.session_state["last_is_correct"]   = is_correct
                         st.rerun()
 
-            # ----------------------------------------------------------
+            
             # Show feedback after submission
-            # ----------------------------------------------------------
+            
             if st.session_state.get("answer_submitted"):
 
                 selected_letter = st.session_state["last_selected"]
                 is_correct      = st.session_state["last_is_correct"]
 
                 if is_correct:
-                    st.success("✅ Correct!")
+                    st.success("Correct!")
                 else:
                     st.error(
-                        f"❌ Wrong answer. "
+                        f"Wrong answer. "
                         f"Correct answer: **{q['correct_answer']}**) "
                         f"{q['options'][q['correct_answer']]}"
                     )
 
-                st.info(f"💬 **Explanation:** {q['explanation']}")
+                st.info(f"Explanation: {q['explanation']}")
 
-                # ----------------------------------------------------------
+                
                 # SRS buttons — only shown after answer submitted
-                # ----------------------------------------------------------
+                
                 st.markdown("**How did you find this question?**")
 
                 col1, col2, col3, col4 = st.columns(4)
@@ -418,25 +428,24 @@ if uploaded_file is not None:
                 srs_choice = None
 
                 with col1:
-                    if st.button("🔴 Again\n\nForgotten", key=f"again_{current_index}"):
+                    if st.button("Again\n\nForgotten", key=f"again_{current_index}"):
                         srs_choice = 0
                 with col2:
-                    if st.button("🟠 Hard\n\nHesitated", key=f"hard_{current_index}"):
+                    if st.button("Hard\n\nHesitated", key=f"hard_{current_index}"):
                         srs_choice = 2
                 with col3:
-                    if st.button("🟢 Good\n\nKnew it", key=f"good_{current_index}"):
+                    if st.button("Good\n\nKnew it", key=f"good_{current_index}"):
                         srs_choice = 4
                 with col4:
-                    if st.button("🔵 Easy\n\nObvious", key=f"easy_{current_index}"):
+                    if st.button("Easy\n\nObvious", key=f"easy_{current_index}"):
                         srs_choice = 5
 
                 if srs_choice is not None:
 
-                    # ----------------------------------------------------------
+                    
                     # Apply SM-2 algorithm
-                    # ----------------------------------------------------------
+                    
 
-                    # Get or initialize card state for this question
                     card_key = f"card_{current_index}"
                     if card_key not in st.session_state:
                         st.session_state[card_key] = {

@@ -40,3 +40,13 @@ Concept 2 ,
 Concept 3 ,
 ....
 }
+
+IMPORTANT: The KEY_CONCEPTS section header must be written EXACTLY as "KEY_CONCEPTS" — 
+a single word, all uppercase, with no additional words before or after it 
+(do NOT write "Key Concepts and Definitions" or similar variations).
+
+Format strictly as:
+
+KEY_CONCEPTS = {
+Concept 1, Concept 2, Concept 3
+}

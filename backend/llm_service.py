@@ -37,26 +37,22 @@ def call_llm(prompt: str) -> str:
             error_msg = str(e)
 
             if "429" in error_msg:
-                # Quota journalier épuisé → inutile de retry
                 if "daily" in error_msg.lower():
                     raise RuntimeError(
                         "Groq rate limit reached after several retries. "
                         "Please wait a moment and try again."
                     )
 
-                # Rate limit → attendre de plus en plus longtemps
                 if attempt < MAX_RETRIES - 1:
                     wait_seconds = 60 * (attempt + 1)  # 60s, 120s, 180s...
                     print(f"Rate limit hit. Waiting {wait_seconds}s before retry {attempt + 2}/{MAX_RETRIES}...")
                     time.sleep(wait_seconds)
                     continue
                 else:
-                    # Tous les retries épuisés → on lève l'erreur
                     raise RuntimeError(
-                        f"Gemini rate limit reached. Original error: {error_msg}"
+                        f"LLM rate limit reached. Original error: {error_msg}"
                     )
 
-            # Autres erreurs
             elif attempt == MAX_RETRIES - 1:
                 raise TimeoutError(
                     f"LLM service unavailable after {MAX_RETRIES} attempts. ({error_msg})"
@@ -117,15 +113,8 @@ def generate_summary(text: str, langue: str):
     fusion_prompt = build_fusion_prompt(partial_summaries, langue)
     time.sleep(5)
     raw_output = call_llm(fusion_prompt)
-    # DEBUG TEMPORAIRE — à supprimer après vérification
-    print("=== RAW OUTPUT ===")
-    print(raw_output[-500:])   # affiche les 500 derniers caractères
-    print("=== END RAW OUTPUT ===")
 
     final_summary, key_concepts = parse_summary_and_concepts(raw_output)
-
-    # DEBUG TEMPORAIRE
-    print(f"=== KEY_CONCEPTS FOUND : {key_concepts} ===")
     return final_summary , key_concepts
 
 def parse_summary_and_concepts(raw_output: str):
@@ -134,16 +123,12 @@ def parse_summary_and_concepts(raw_output: str):
     key_concepts  = []
     final_summary = raw_output.strip()
 
-    # ----------------------------------------------------------
-    # Normalisation : supprimer les astérisques autour de KEY_CONCEPTS
-    # **KEY_CONCEPTS** → KEY_CONCEPTS
-    # ----------------------------------------------------------
+
+    # Normalisation : remove the asterisks around KEY_CONCEPTS
     normalized = re.sub(r"\*{1,2}(KEY_CONCEPTS)\*{1,2}", r"\1", raw_output, flags=re.IGNORECASE)
 
-    # ----------------------------------------------------------
+
     # Strategy 1 : KEY_CONCEPTS = { ... }
-    # Gère le cas où = { est sur la même ligne OU la ligne suivante
-    # ----------------------------------------------------------
     pattern = r"KEY_CONCEPTS\s*[\n\s]*=\s*\{([^}]*)\}"
     match   = re.search(pattern, normalized, re.DOTALL | re.IGNORECASE)
 
@@ -157,17 +142,15 @@ def parse_summary_and_concepts(raw_output: str):
             and len(c.strip().lstrip("-•* ").rstrip(",").strip()) > 1
         ]
 
-        # Trouver la position dans le texte original
         orig_match = re.search(r"\*{0,2}KEY_CONCEPTS\*{0,2}", raw_output, re.IGNORECASE)
         if orig_match:
             final_summary = raw_output[:orig_match.start()].strip()
 
         return final_summary, key_concepts
 
-    # ----------------------------------------------------------
-    # Strategy 2 : **KEY_CONCEPTS** suivi de bullet points
-    # (sans accolades)
-    # ----------------------------------------------------------
+
+    # Strategy 2 : **KEY_CONCEPTS** followed by bullet points
+
     pattern2 = r"KEY_CONCEPTS\s*[=:\n]*([\s\S]*?)(?=\n[A-Z#*]|\Z)"
     match2   = re.search(pattern2, normalized, re.DOTALL | re.IGNORECASE)
 
@@ -187,27 +170,22 @@ def parse_summary_and_concepts(raw_output: str):
 
         return final_summary, key_concepts
 
-    # ----------------------------------------------------------
-    # Strategy 4 : Rien trouvé
-    # ----------------------------------------------------------
+
+    # Strategy 4 : Nothing found
+
     print("WARNING : KEY_CONCEPTS not found in LLM output.")
     return final_summary, []
 
 def generate_explanation(concept: str, langue: str) -> str:
-    """
-    Re-explains a concept the student did not understand.
-    """
+    #Re-explains a concept the student did not understand.
     prompt = build_explain_prompt(concept, langue)
     return call_llm(prompt)
 
 def generate_qcm(resume_final: str, n_questions: int , key_concepts , langue: str):
-    # Step 1 : Build the prompt
     prompt = build_qcm_prompt(resume_final, n_questions , key_concepts , langue)
 
-    # Step 2 : Call the LLM → returns raw JSON string
     raw_response = call_llm(prompt)
 
-    # Step 3 : Parse the JSON response
     questions = parse_qcm_response(raw_response)
 
     return questions

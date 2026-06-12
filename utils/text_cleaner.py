@@ -1,16 +1,6 @@
 import re
 
 def clean_text(text: str) -> str:
-    """
-    Cleans raw text extracted from a PDF.
-    Removes artifacts that waste tokens and degrade LLM quality.
-
-    Args:
-        text : raw text from PyMuPDF
-
-    Returns:
-        str : cleaned text
-    """
 
     # Remove form feed characters (PDF page break artifact)
     text = text.replace("\x0c", "\n")

@@ -2,16 +2,6 @@ from datetime import date, timedelta
 from config.settings import MIN_EASINESS
 
 def update_card(card: dict, quality: int) -> dict:
-    """
-    Applies SM-2 algorithm to update card state.
-
-    Args:
-        card    : current card state {interval, easiness, repetitions}
-        quality : student rating (0=Again, 2=Hard, 4=Good, 5=Easy)
-
-    Returns:
-        dict : updated card state with next_review date
-    """
 
     interval    = card["interval"]
     easiness    = card["easiness"]

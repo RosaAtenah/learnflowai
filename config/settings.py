@@ -1,37 +1,25 @@
-# config/settings.py
-
 
 # PDF validation
 
-MAX_FILE_SIZE_MB = 10       # Maximum file size in MB
-                            # Reason : avoids memory overload on free hosting
-
+MAX_FILE_SIZE_MB = 10      
 ZONE1_PAGES = 30          
-
 ZONE2_PAGES = 50           
-
 MIN_TEXT_LENGTH = 100       
 
 # Chunking
 
-CHUNK_SIZE = 700           # Tokens per chunk
-                           
-
-CHUNK_OVERLAP = 70         # Overlapping tokens between chunks
+CHUNK_SIZE = 700           
+CHUNK_OVERLAP = 70        
                             
 # QCM generation
 
-MAX_QUESTIONS = 20          # Hard ceiling on number of questions
-                           
-
-DEFAULT_QUESTIONS = 5       # Default value shown in the slider
+MAX_QUESTIONS = 20          
+DEFAULT_QUESTIONS = 5       
 
 
 # SRS engine (SM-2)
-
-DEFAULT_EASINESS = 2.5      # Initial easiness factor for all cards
-
-MIN_EASINESS = 1.3          # Minimum easiness factor (SM-2 standard)
+DEFAULT_EASINESS = 2.5      
+MIN_EASINESS = 1.3          
 
 INTERVAL_AGAIN = 1          
 INTERVAL_HARD  = 1          
@@ -47,11 +35,9 @@ INTERVAL_EASY  = 7
 MODEL_PROVIDER = "groq"
 MODEL = "llama-3.1-8b-instant"
 
-MAX_RETRIES = 3       # 3 tentatives au lieu de 2
+MAX_RETRIES = 3       
 API_TIMEOUT = 30
 
-# UI
-
-DEFAULT_LANGUE = "English"   # Default language for summary and QCM
+DEFAULT_LANGUE = "English"   
 
 BASE_MIN_QUESTIONS = 5

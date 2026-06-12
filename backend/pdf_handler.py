@@ -3,20 +3,7 @@ from config.settings import MAX_FILE_SIZE_MB, ZONE1_PAGES, ZONE2_PAGES, MIN_TEXT
 from utils.text_cleaner import clean_text
 
 def extract_text_from_pdf(pdf_file, max_pages=None, page_range=None):
-    """
-    Extracts text from a PDF file.
     
-    Args:
-        pdf_file    : uploaded PDF file (Streamlit UploadedFile)
-        max_pages   : maximum number of pages to read (from the beginning)
-                      ignored if page_range is provided
-        page_range  : tuple (start_page, end_page) — 1-indexed, inclusive
-                      example: (10, 15) extracts pages 10 to 15
-    
-    Returns:
-        str : extracted and concatenated text
-    """
-
     text = ""
 
     pdf_document = fitz.open(
@@ -27,7 +14,6 @@ def extract_text_from_pdf(pdf_file, max_pages=None, page_range=None):
     nb_pages = len(pdf_document)
 
     # Determine which pages to extract
-
     if page_range is not None:
         # User chose a specific range (e.g. pages 10 to 15)
         start_page, end_page = page_range
@@ -39,24 +25,22 @@ def extract_text_from_pdf(pdf_file, max_pages=None, page_range=None):
         pages_to_read = range(start_index, end_index + 1)
 
     elif max_pages is not None:
-        # Read from the beginning up to max_pages
         pages_to_read = range(min(nb_pages, max_pages))
 
     else:
-        # Read the entire document
         pages_to_read = range(nb_pages)
 
     # Extract text from selected pages
-
     for i in pages_to_read:
         page_text = pdf_document[i].get_text()
-        if page_text.strip():               # skip blank pages silently
+        if page_text.strip():               
             text += page_text
 
     pdf_document.close()
     pdf_file.seek(0)
 
-    return clean_text(text)
+    #extracted and concatenated text
+    return clean_text(text) 
 
 
 def verify_pdf_validity(pdf_file):
