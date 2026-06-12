@@ -4,7 +4,7 @@ ANDRIAMANATENA Rosa
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/RosaAtenah/learnflow-ai.git
+git clone https://github.com/RosaAtenah/learnflowai.git
 cd learnflow-ai
 ````
 
